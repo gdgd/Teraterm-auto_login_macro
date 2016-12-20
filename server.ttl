@@ -1,0 +1,161 @@
+;このマクロで実施していること
+;1)sshでログインする先接続先リストを取得
+;2)接続設定取得
+;3)接続先リストの画面表示
+;4)選択された接続先の設定をロード
+;5)環境へssh接続
+;6)teraturmの文字コードを設定
+;7)ログ出力を設定
+;
+;以上
+
+;---------------------------------------
+;初期設定
+;---------------------------------------
+;ログファイルパス
+logdir='{logpath}'
+
+;設定ファイルパス
+confidir='./conf'
+
+;接続先リスト　接続先のリストボックス表示用
+;選択されたホスト名のiniファイルが読み込まれてssh接続する
+listfile='hostlist.ini'
+
+;---------------------------------------
+
+count = 0
+strdim lines 20
+
+;接続先リストを取得
+makepath hostlist confidir listfile
+
+;messagebox hostlist 'hostlistpath'
+
+;ファイル取得
+fileopen fh hostlist 0
+while 1
+  filereadln fh buf1
+  if result = 1 then
+    break
+  endif
+    lines[count] = buf1
+    count = count + 1
+endwhile
+fileclose fh
+
+
+; 接続先ホスト選択
+listbox 'Select Host!' 'Select Connection' lines
+if result != -1 then
+    HOSTADDR = lines[result]
+else
+    end
+endif
+
+;設定ファイルのパスを生成
+strconcat HOSTADDR '.ini'
+makepath inifile confidir HOSTADDR
+;messagebox inifile 'host'
+
+; 設定読込
+fileopen fh1 inifile 0
+while 1
+
+  ;ファイルを1行づつ読込
+  filereadln fh1 buf
+
+  ;ファイルの終端になったら終了
+  if result = 1 then
+    break
+  endif
+
+  ;正規表現に一致する設定を変数に格納
+  strmatch buf '^hostname:'
+  if result = 1 then
+     strsplit buf ':'
+     hostname = groupmatchstr2
+  endif
+  strmatch buf '^port:'
+  if result = 1 then
+     strsplit buf ':'
+     port = groupmatchstr2
+  endif
+  strmatch buf '^conecttype:'
+  if result = 1 then
+     strsplit buf ':'
+     conecttype = groupmatchstr2
+  endif
+  strmatch buf '^user:'
+  if result = 1 then
+     strsplit buf ':'
+     user = groupmatchstr2
+  endif
+  strmatch buf '^passwd:'
+  if result = 1 then
+     strsplit buf ':'
+     passwd = groupmatchstr2
+  endif
+  strmatch buf '^kanjicode:'
+  if result = 1 then
+     strsplit buf ':'
+     kanjicode = groupmatchstr2
+  endif
+endwhile
+fileclose fh1
+
+
+
+;接続文字列参考：「infosys-api01.sakura.ad.jp:22 /ssh /auth=password /user=develop /passwd=develop
+;接続情報設定
+connection = hostname
+strconcat connection ':'
+strconcat connection port
+strconcat connection ' /'
+strconcat connection conecttype
+strconcat connection ' /auth=password /user='
+strconcat connection user
+strconcat connection ' /passwd='
+strconcat connection passwd
+
+;デバック用
+messagebox connection 'connect'
+
+;接続
+connect connection
+
+;接続判定
+if result <> 2 then 
+    messagebox 'Don`t Connect' 
+    end 
+endif
+
+
+;ログ出力設定
+logfile = logdir
+strconcat logfile hostname
+getdate datetime '-%Y%m%d-%H%M%S'
+strconcat logfile datetime
+strconcat logfile '.log'
+logopen logfile 0 1
+
+
+
+;文字コード設定自動判定
+strmatch kanjicode 'EUC'
+if result = 1 then
+    ; EUC 
+    callmenu 54011
+    callmenu 54111
+else
+  strmatch kanjicode 'Shift_JIS'
+  if result = 1 then
+      ; Shift_JIS 
+      callmenu 54010
+      callmenu 54110
+  else
+      ; UTF8 
+      callmenu 54013;
+      callmenu 54113;
+  endif
+endif
