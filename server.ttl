@@ -159,3 +159,5 @@ else
       callmenu 54113;
   endif
 endif
+
+;Copyright (c) 2016 Masateru Maruyama
