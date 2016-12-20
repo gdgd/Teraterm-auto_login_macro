@@ -14,12 +14,12 @@
   
 実行前に以下3ファイルの設定を行ってください。  
 
-・server.ttl  
+・auto_login.ttl  
 ・conf/hostlist.ini  
 ・conf/{接続先の名前}.ini  
 
 
-【server.ttl】
+【auto_login.ttl】
 以下3点の設定を任意で変更可能です。  
 これらは特に設定しなくても問題ありません。  
 
